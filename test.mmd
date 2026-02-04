@@ -1,0 +1,141 @@
+classDiagram
+direction LR
+
+%% =========================
+%% Core World Concepts
+%% =========================
+class GameEntity {
+  +id: string
+  +x: int
+  +y: int
+  +visible: bool
+  +collidable: bool
+  +update(): void
+  +render(): void
+}
+
+class Grid {
+  +width: int
+  +height: int
+  +cells: Cell[] 
+  +isInside(x:int,y:int): bool
+  +isBlocked(x:int,y:int): bool
+  +placeEntity(e:GameEntity, x:int, y:int): bool
+  +removeEntity(e:GameEntity): void
+  +getEntitiesAt(x:int,y:int): GameEntity[]
+}
+
+class Cursor {
+  +x: int
+  +y: int
+  +selectedTool: string
+  +move(dx:int, dy:int): void
+  +selectCell(x:int,y:int): void
+  +placeWall(grid:Grid): bool
+  +interact(grid:Grid): void
+}
+
+class Mouse {
+  +hasCheese: bool
+  +state: string
+  +planMove(grid:Grid): (int,int)
+  +moveTo(grid:Grid, x:int, y:int): void
+  +pickUp(item:Items): void
+}
+
+class Wall {
+  +durability: int
+  +blocksMovement: bool
+}
+
+%% =========================
+%% Items
+%% =========================
+class Items {
+  +name: string
+  +consumable: bool
+  +applyToMouse(m:Mouse): void
+  +applyToPlayer(): void
+}
+
+class Cheese {
+  +points: int
+  +isWinCondition: bool
+}
+
+class ExtraWall {
+  +extraPlacements: int
+  +triggerChance: float
+  +applyTurnBonus(): void
+}
+
+%% =========================
+%% UI / Progress Tracking
+%% =========================
+class Level {
+  +currentLevel: int
+  +advance(): void
+  +reset(): void
+}
+
+class Moves {
+  +count: int
+  +increment(): void
+  +reset(): void
+}
+
+class Score {
+  +value: int
+  +calculate(level:int, moves:int): int
+  +reset(): void
+}
+
+class Scoreboard {
+  +showScore(score:Score): void
+  +showMoves(moves:Moves): void
+  +showLevel(level:Level): void
+  +renderUI(): void
+}
+
+%% =========================
+%% Optional internal helper (kept light)
+%% =========================
+class Cell {
+  +x:int
+  +y:int
+  +entities: GameEntity[]
+}
+
+%% =========================
+%% Inheritance (is-a)
+%% =========================
+GameEntity <|-- Cursor
+GameEntity <|-- Mouse
+GameEntity <|-- Wall
+GameEntity <|-- Items
+
+Items <|-- Cheese
+Items <|-- ExtraWall
+
+%% =========================
+%% Composition / Aggregation (has-a)
+%% =========================
+Grid *-- Cell : contains
+Cell o-- GameEntity : holds
+
+Scoreboard o-- Score : displays
+Scoreboard o-- Moves : displays
+Scoreboard o-- Level : displays
+
+%% =========================
+%% Associations (uses/controls)
+%% =========================
+Cursor --> Grid : interacts with
+Cursor --> Wall : places
+
+Mouse --> Grid : navigates
+Mouse --> Items : picks up
+Mouse --> Cheese : seeks
+
+Moves --> Score : influences
+Level --> Score : influences
