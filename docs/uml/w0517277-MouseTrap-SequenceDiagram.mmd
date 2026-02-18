@@ -1,0 +1,97 @@
+sequenceDiagram
+autonumber
+title Mouse Trap – One Turn (Player places Wall, Mouse moves 1 cell)
+
+actor Player
+participant Cursor
+participant Grid
+participant Wall as Wall(placed)
+participant "Items" as Items
+participant Cheese
+participant Mouse
+participant Moves
+participant Score
+participant Level
+participant Scoreboard
+
+%% === Begin Turn ===
+Player->>Cursor: Select target cell (x,y)
+Cursor->>Grid: validate isInside(x,y)?
+Grid-->>Cursor: valid/invalid
+
+alt Invalid cell
+  Cursor-->>Player: Show error (out of bounds)
+  Note over Player,Cursor: Player must pick a valid cell
+else Valid cell
+  Cursor->>Grid: isBlocked(x,y)?
+  Grid-->>Cursor: true/false
+
+  alt Cell blocked (wall exists)
+    Cursor-->>Player: Show error (cell blocked)
+  else Cell free
+    Cursor->>Grid: placeEntity(Wall, x, y)
+    Grid->>Wall: initialize at (x,y), collidable=true
+    Grid-->>Cursor: placement success
+
+    opt Extra Wall triggers this turn
+      Note over Cursor,Grid: "Extra Wall" bonus: +1 additional placement this turn
+      Cursor->>Grid: placeEntity(Wall, x2, y2)
+      Grid-->>Cursor: placement success/failure
+    end
+
+    %% Moves increment (per player turn)
+    Cursor->>Moves: increment()
+    Moves-->>Cursor: moves updated
+    Cursor->>Scoreboard: refresh with (Level, Moves, Score)
+    Scoreboard-->>Cursor: UI updated
+
+    %% === Mouse Phase ===
+    Note over Mouse,Grid: Mouse plans its move
+    Mouse->>Grid: get legal neighbors of (mx,my)
+    Grid-->>Mouse: list of candidate cells (unblocked, in-bounds)
+
+    alt No legal moves
+      Mouse-->>Grid: isTrapped = true
+      Note over Player,Mouse: Player wins (mouse trapped)
+      Cursor->>Score: calculate(Level, Moves)
+      Score-->>Scoreboard: update score display
+      Scoreboard-->>Player: Show win state
+    else Has at least one legal move
+      Mouse->>Grid: choose target (nx,ny) using AI (e.g., BFS/greedy)
+      Mouse->>Grid: isBlocked(nx,ny)?
+      Grid-->>Mouse: false (free)
+
+      Mouse->>Grid: moveTo(nx, ny)
+      Grid-->>Mouse: position updated
+
+      %% Check for item pickup at new cell
+      Mouse->>Grid: getEntitiesAt(nx,ny)
+      Grid-->>Mouse: [Items? Cheese?]
+      alt Cheese present
+        Mouse->>Cheese: pickUp()
+        Grid->>Cheese: remove from grid
+        Note over Mouse,Cheese: Mouse collects Cheese
+
+        alt Immediate win on cheese touch
+          Note over Player,Mouse: Mouse wins immediately
+          Cursor->>Score: calculate(Level, Moves)  %% scoring policy on loss/zero
+          Score-->>Scoreboard: update score display
+          Scoreboard-->>Player: Show loss state
+        else Escape variant (requires reaching exit)
+          Note over Mouse,Grid: Mouse state = "ESCAPE_WITH_CHEESE"
+          Cursor->>Scoreboard: refresh HUD (no game over yet)
+        end
+      else Non-cheese item present
+        Mouse->>Items: pickUp()
+        Grid->>Items: remove from grid
+        Note over Mouse,Items: Apply item effect (if any)
+      end
+
+      %% End of Mouse Phase
+      Cursor->>Scoreboard: refresh with (Level, Moves, Score)
+      Scoreboard-->>Player: UI updated
+    end
+  end
+end
+
+%% === Turn Ends; next Player Phase begins next turn ===
