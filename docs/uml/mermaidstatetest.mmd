@@ -1,0 +1,26 @@
+stateDiagram-v2
+title GameStateMachine — Minimal
+
+[*] --> LEVEL_INIT
+
+state "LEVEL_INIT" as LEVEL_INIT
+state "PLAYING" as PLAYING
+state "PAUSED" as PAUSED
+state "POWER_MODE" as POWER_MODE
+state "LIFE_LOST" as LIFE_LOST
+state "LEVEL_COMPLETE" as LEVEL_COMPLETE
+state "GAME_OVER" as GAME_OVER
+
+LEVEL_INIT --> PLAYING : init_complete()
+PLAYING --> PAUSED : pause_pressed()
+PAUSED --> PLAYING : pause_pressed()
+PLAYING --> LIFE_LOST : collision_normal()
+LIFE_LOST --> LEVEL_INIT : update()
+
+PLAYING --> GAME_OVER : collision_normal()[lives <= 0]
+PLAYING --> POWER_MODE : power_item_collected
+POWER_MODE --> PLAYING : power_expired
+PLAYING --> LEVEL_COMPLETE : win_condition
+LEVEL_COMPLETE --> LEVEL_INIT : next_level
+
+GAME_OVER --> [*]
