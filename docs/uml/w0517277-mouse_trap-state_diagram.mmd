@@ -1,0 +1,26 @@
+stateDiagram-v2
+[*] --> LevelInitialize
+
+LevelInitialize --> Player_Turn : init_complete()
+
+Player_Turn --> Mouse_Turn : end_player_turn()
+Mouse_Turn --> Player_Turn : end_mouse_turn()
+
+Player_Turn --> Pause : pause_pressed()
+Mouse_Turn --> Pause : pause_pressed()
+Pause --> Player_Turn : resume (from Player)
+Pause --> Mouse_Turn : resume (from Mouse)
+
+Player_Turn --> PowerMode : power_mode_pickup()
+Mouse_Turn --> PowerMode : power_mode_pickup()
+PowerMode --> Player_Turn : resumeTurn (if Player was active)
+PowerMode --> Mouse_Turn : resumeTurn (if Mouse was active)
+
+Player_Turn --> GameOver : mouse escaped / lose
+Mouse_Turn --> GameOver : mouse escaped / lose
+
+Player_Turn --> LevelComplete : mouse trapped / win
+Mouse_Turn --> LevelComplete : mouse trapped / win
+
+GameOver --> LevelInitialize : restartLevel()
+LevelComplete --> LevelInitialize : nextLevel() / restartLevel()

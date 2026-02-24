@@ -1,0 +1,23 @@
+sequenceDiagram
+autonumber
+participant Game
+participant UI
+participant Scoreboard
+
+Game-->>Game: enter GameOver state (freeze board)
+Game->>UI: showLoseMenu()
+
+UI->>Scoreboard: addAttempt()
+Scoreboard-->>UI: updated
+
+UI-->>Game: wait for player choice
+alt Restart
+  UI->>Game: restartLevel()
+  Game-->>Game: resetLevel()
+else Next (if allowed)
+  UI->>Game: nextLevel()
+  Game-->>Game: loadNextLevel()
+else Exit
+  UI->>Game: exitToMenu()
+  Game-->>Game: mainMenu()
+end

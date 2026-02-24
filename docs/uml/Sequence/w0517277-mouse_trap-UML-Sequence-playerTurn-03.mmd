@@ -1,0 +1,22 @@
+sequenceDiagram
+autonumber
+actor Player
+participant PlayerInputSystem
+participant WallPlacementValidator
+participant WallPlacementSystem
+participant Grid
+participant TurnManager
+
+Player->>PlayerInputSystem: selectCell(pos)
+PlayerInputSystem->>WallPlacementValidator: validate(grid, pos)
+WallPlacementValidator-->>PlayerInputSystem: allowed | denied
+
+alt allowed
+  PlayerInputSystem->>WallPlacementSystem: placeWall(grid, pos)
+  WallPlacementSystem->>Grid: setCellToWall(pos)
+  Grid-->>WallPlacementSystem: placed = true
+  WallPlacementSystem-->>PlayerInputSystem: success
+  PlayerInputSystem->>TurnManager: endPlayerTurn()  %% switch to MOUSE_TURN
+else denied
+  PlayerInputSystem-->>Player: rejection (illegal placement)
+end

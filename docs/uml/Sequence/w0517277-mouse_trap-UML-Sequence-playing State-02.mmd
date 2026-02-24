@@ -1,0 +1,57 @@
+sequenceDiagram
+autonumber
+participant Game
+participant TurnManager
+participant BoardState
+participant WallPlacementSystem
+participant Mouse
+participant MouseAI
+participant Grid
+participant CollisionDetection
+participant WinLoseDetection
+
+Game->>TurnManager: getCurrent()
+
+loop while state == Playing
+  alt TurnManager.current == PLAYER_TURN
+    Game->>WallPlacementSystem: enableForPlayerTurn()
+    note over Game,WallPlacementSystem: Player_Turn handles placement and validation
+    Game->>BoardState: snapshot()
+    Game->>CollisionDetection: checkTrapOrExit(grid, mouse)
+    CollisionDetection-->>Game: status (none | trapped | exit)
+    Game->>WinLoseDetection: evaluate(status)
+    alt exit
+      WinLoseDetection-->>Game: GameOver
+    else trapped
+      WinLoseDetection-->>Game: LevelComplete
+    else continue
+      WinLoseDetection-->>Game: continue
+      Game->>TurnManager: next()
+    end
+  else TurnManager.current == MOUSE_TURN
+    Game->>MouseAI: chooseNextMove(grid, mouse, powerMode?)
+    MouseAI-->>Game: targetSteps
+    Game->>Mouse: performTurn(grid, targetSteps)
+    Game->>BoardState: snapshot()
+    Game->>CollisionDetection: checkTrapOrExit(grid, mouse)
+    CollisionDetection-->>Game: status (none | trapped | exit)
+    Game->>WinLoseDetection: evaluate(status)
+    alt exit
+      WinLoseDetection-->>Game: GameOver
+    else trapped
+      WinLoseDetection-->>Game: LevelComplete
+    else continue
+      WinLoseDetection-->>Game: continue
+      Game->>TurnManager: next()
+    end
+    opt Power mode upkeep
+      Game->>Mouse: isPowerMode()
+      alt active
+        Mouse->>Mouse: decrementPowerTurn()
+        opt expired now
+          Mouse->>Mouse: exitPowerMode()
+        end
+      end
+    end
+  end
+end

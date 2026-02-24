@@ -1,0 +1,140 @@
+---
+config:
+  layout: elk
+---
+classDiagram
+
+class Game {
+  -grid: Grid
+  -player: Player
+  -mouse: Mouse
+  -scoreboard: Scoreboard
+  +start(): void
+  +updateTurn(): void
+  +checkWinLose(): void
+}
+
+class Grid {
+  -width: int
+  -height: int
+  -cells: Cell[][]
+  +isInside(pos: Position): bool
+  +isEmpty(pos: Position): bool
+  +getEntityAt(pos: Position): GameEntity?
+  +placeEntity(e: GameEntity, pos: Position): bool
+  +removeEntity(pos: Position): void
+}
+
+class Cell {
+  -position: Position
+  -entity: GameEntity?
+  +isEmpty(): bool
+}
+
+class Position {
+  +x: int
+  +y: int
+  +equals(other: Position): bool
+}
+
+class GameEntity {
+  <<abstract>>
+  -id: int
+  -position: Position
+  +getPosition(): Position
+  +setPosition(pos: Position): void
+}
+
+class Wall {
+  +blocksMovement(): bool
+}
+
+class Item {
+  <<abstract>>
+  +onPickedUp(by: Mouse): void
+}
+
+class Cheese {
+  +onPickedUp(by: Mouse): void
+}
+
+class ExtraWallPickup {
+  +onPickedUp(by: Mouse): void
+}
+
+class Player {
+  -cursor: Cursor
+  -wallsToPlaceThisTurn: int
+  +selectCell(pos: Position): void
+  +placeWall(pos: Position): bool
+  +grantExtraWall(): void
+  +endTurn(): void
+}
+
+class Cursor {
+  -position: Position
+  +moveTo(pos: Position): void
+  +canSelect(grid: Grid, pos: Position): bool
+  +select(pos: Position): void
+}
+
+class Mouse {
+  -hasCheese: bool
+  +move(grid: Grid): void
+  +chooseNextMove(grid: Grid): Position
+  +tryEnter(grid: Grid, pos: Position): void
+  +pickUp(item: Item): void
+}
+
+class Scoreboard {
+  -score: Score
+  -moves: Moves
+  -level: Level
+  +render(): void
+  +addMove(): void
+  +addScore(amount: int): void
+}
+
+class Score {
+  -value: int
+  +add(amount: int): void
+  +subtract(amount: int): void
+}
+
+class Moves {
+  -count: int
+  +increment(): void
+}
+
+class Level {
+  -number: int
+  +next(): void
+}
+
+Game *-- Grid
+Game *-- Player
+Game *-- Mouse
+Game *-- Scoreboard
+
+Grid *-- Cell
+Cell *-- Position
+
+GameEntity o-- Position
+
+Player *-- Cursor
+Cursor o-- Position
+
+Wall --|> GameEntity
+Mouse --|> GameEntity
+Item --|> GameEntity
+Cheese --|> Item
+ExtraWallPickup --|> Item
+
+Scoreboard *-- Score
+Scoreboard *-- Moves
+Scoreboard *-- Level
+
+Mouse ..> Grid : queries occupancy
+Player ..> Grid : places walls
+Cursor ..> Grid : selects cells
+Mouse ..> Item : collides/picks up

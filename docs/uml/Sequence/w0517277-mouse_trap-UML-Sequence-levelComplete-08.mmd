@@ -1,0 +1,25 @@
+sequenceDiagram
+autonumber
+participant Game
+participant UI
+participant Scoreboard
+participant TurnManager
+
+Game-->>Game: enter LevelComplete (freeze board)
+Game->>UI: showWinMessage()
+
+UI->>Scoreboard: addScore(amount)
+Scoreboard-->>UI: updated
+
+UI-->>Game: wait for choice
+alt Next Level
+  UI->>TurnManager: advanceLevel()
+  TurnManager-->>Game: levelIndex++
+  Game-->>Game: loadNextLevel()
+else Restart
+  UI->>Game: restartLevel()
+  Game-->>Game: resetLevel()
+else Exit
+  UI->>Game: exitToMenu()
+  Game-->>Game: mainMenu()
+end

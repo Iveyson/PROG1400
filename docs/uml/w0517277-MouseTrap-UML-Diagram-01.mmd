@@ -9,9 +9,20 @@ class Game {
   -player: Player
   -mouse: Mouse
   -scoreboard: Scoreboard
+  -turnManager: TurnManager
+  -wallPlacementSystem: WallPlacementSystem
+  -collisionDetection: CollisionDetection
+  -winLoseDetection: WinLoseDetection
+  -boardState: BoardState
+  -inputHandler: InputHandler
+  -ui: UI
+  -pauseMenu: PauseMenu
   +start(): void
   +updateTurn(): void
   +checkWinLose(): void
+  +pause(): void
+  +resume(): void
+  +resetLevel(): void
 }
 
 class Grid {
@@ -80,19 +91,25 @@ class Cursor {
 
 class Mouse {
   -hasCheese: bool
+  -powerMode: bool
+  -powerTimer: Timer
   +move(grid: Grid): void
   +chooseNextMove(grid: Grid): Position
   +tryEnter(grid: Grid, pos: Position): void
   +pickUp(item: Item): void
+  +enterPowerMode(): void
+  +exitPowerMode(): void
 }
 
 class Scoreboard {
   -score: Score
   -moves: Moves
   -level: Level
+  -attempts: Attempts
   +render(): void
   +addMove(): void
   +addScore(amount: int): void
+  +addAttempt(): void
 }
 
 class Score {
@@ -111,10 +128,106 @@ class Level {
   +next(): void
 }
 
+class Attempts {
+  -count: int
+  +increment(): void
+}
+
+%% --- Systems referenced by your state list ---
+
+class TurnManager {
+  -current: TurnState
+  +resetOrder(): void
+  +getCurrent(): TurnState
+  +next(): void
+}
+
+class TurnState {
+  <<enum>>
+  PLAYER_TURN
+  MOUSE_TURN
+}
+
+class WallPlacementSystem {
+  -validator: WallPlacementValidator
+  +placeWall(grid: Grid, pos: Position): bool
+  +isLegal(grid: Grid, pos: Position): bool
+}
+
+class WallPlacementValidator {
+  +validate(grid: Grid, pos: Position): bool
+}
+
+class PlayerInputSystem {
+  +selectCell(pos: Position): void
+  +confirmPlacement(): bool
+}
+
+class MouseAI {
+  +chooseNextMove(grid: Grid, mouse: Mouse): Position
+}
+
+class MovementRules {
+  +isLegalMove(grid: Grid, from: Position, to: Position): bool
+  +applyMove(mouse: Mouse, to: Position): void
+}
+
+class CollisionDetection {
+  +checkExit(grid: Grid, mouse: Mouse): bool
+  +checkTrap(grid: Grid, mouse: Mouse): bool
+  +checkPickup(grid: Grid, mouse: Mouse): Item?
+}
+
+class WinLoseDetection {
+  +checkWin(grid: Grid, mouse: Mouse): bool
+  +checkLose(grid: Grid, mouse: Mouse): bool
+}
+
+class BoardState {
+  +snapshot(): void
+  +restore(): void
+}
+
+class Timer {
+  -turnsRemaining: int
+  +start(turns: int): void
+  +tick(): void
+  +isActive(): bool
+}
+
+class InputHandler {
+  +enablePlayer(): void
+  +disablePlayer(): void
+  +enablePause(): void
+  +disablePause(): void
+}
+
+class PauseMenu {
+  +open(): void
+  +close(): void
+}
+
+class UI {
+  +showWin(): void
+  +showLose(): void
+  +showPause(): void
+  +showLevelStart(): void
+}
+
+%% --- Relationships ---
+
 Game *-- Grid
 Game *-- Player
 Game *-- Mouse
 Game *-- Scoreboard
+Game *-- TurnManager
+Game *-- WallPlacementSystem
+Game *-- CollisionDetection
+Game *-- WinLoseDetection
+Game *-- BoardState
+Game *-- InputHandler
+Game *-- UI
+Game *-- PauseMenu
 
 Grid *-- Cell
 Cell *-- Position
@@ -133,8 +246,27 @@ ExtraWallPickup --|> Item
 Scoreboard *-- Score
 Scoreboard *-- Moves
 Scoreboard *-- Level
+Scoreboard *-- Attempts
+
+WallPlacementSystem *-- WallPlacementValidator
+Player ..> PlayerInputSystem : uses input
+PlayerInputSystem ..> WallPlacementSystem : requests placement
+WallPlacementValidator ..> Grid : validate position
+WallPlacementSystem ..> Grid : place/remove walls
+
+Mouse ..> MouseAI : asks for next move
+Mouse ..> MovementRules : applies movement
+MovementRules ..> Grid : checks legality
+
+CollisionDetection ..> Grid : occupancy/exit/trap
+WinLoseDetection ..> CollisionDetection : evaluate end-state
+
+BoardState ..> Grid : snapshot/restore
+
+PauseMenu ..> UI : display
+InputHandler ..> UI : route events
+
+Mouse ..> Timer : power mode duration
 
 Mouse ..> Grid : queries occupancy
-Player ..> Grid : places walls
-Cursor ..> Grid : selects cells
-Mouse ..> Item : collides/picks up
+Player ..> Grid : places walls (via system)

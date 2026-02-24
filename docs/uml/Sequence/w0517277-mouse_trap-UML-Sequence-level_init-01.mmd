@@ -1,0 +1,22 @@
+sequenceDiagram
+autonumber
+participant Game
+participant Grid
+participant Mouse
+participant TurnManager
+participant WallPlacementSystem
+
+Game->>Grid: loadMaze(levelId)
+Grid-->>Game: mazeLoaded()
+
+Game->>Mouse: setPosition(startCell)
+Mouse-->>Game: positioned()
+
+Game->>TurnManager: resetOrder()
+TurnManager-->>Game: order = [PLAYER_TURN, MOUSE_TURN]
+Game->>TurnManager: setCurrent(PLAYER_TURN)
+
+Game->>WallPlacementSystem: init(grid)
+WallPlacementSystem-->>Game: ready()
+
+Game-->>Game: LevelInitialize complete (ready for PLAYER_TURN)

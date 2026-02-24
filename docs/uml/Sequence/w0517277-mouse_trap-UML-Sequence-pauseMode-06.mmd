@@ -1,0 +1,25 @@
+sequenceDiagram
+autonumber
+participant InputHandler
+participant Game
+participant PauseMenu
+
+InputHandler->>Game: pauseRequested()
+Game-->>Game: freeze updates (AI, timers, input to board)
+Game->>PauseMenu: open()
+
+PauseMenu-->>InputHandler: wait for resume/restart/quit
+
+alt resume
+  InputHandler->>Game: resumeRequested()
+  Game->>PauseMenu: close()
+  Game-->>Game: unfreeze updates
+else restart
+  InputHandler->>Game: restartRequested()
+  Game->>PauseMenu: close()
+  Game-->>Game: resetLevel()
+else quit
+  InputHandler->>Game: quitRequested()
+  Game->>PauseMenu: close()
+  Game-->>Game: returnToMainMenu()
+end

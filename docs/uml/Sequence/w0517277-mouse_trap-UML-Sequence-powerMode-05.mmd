@@ -1,0 +1,23 @@
+sequenceDiagram
+autonumber
+participant Mouse
+participant Cheese
+participant Timer
+participant MovementRules
+
+Mouse->>Cheese: pickUp()
+Cheese-->>Mouse: grantPowerMode()
+Mouse->>Timer: start(turns = 3)
+
+note over Mouse,Timer: While Timer active, Mouse gets 2-step movement per Mouse Turn
+
+loop Each Mouse Turn while Timer active
+  Mouse->>MovementRules: getStepBudget(powerMode=true) = 2
+  Mouse->>Timer: decrementTurn()
+  alt Timer expired after decrement
+    Timer-->>Mouse: expired
+    Mouse-->>Mouse: exitPowerMode()
+  else still active
+    Timer-->>Mouse: remaining > 0
+  end
+end

@@ -1,0 +1,37 @@
+sequenceDiagram
+autonumber
+participant TurnManager
+participant Mouse
+participant MouseAI
+participant MovementRules
+participant Grid
+participant CollisionDetection
+participant WinLoseDetection
+
+TurnManager->>Mouse: beginMouseTurn()
+
+Mouse->>MouseAI: chooseNextMove(grid, self, powerMode)
+MouseAI-->>Mouse: stepPlan
+
+loop for each planned step
+  Mouse->>MovementRules: isLegalMove(grid, from, to)
+  MovementRules-->>Mouse: legal | blocked
+  alt legal
+    Mouse->>Grid: tryEnter(to)
+    Grid-->>Mouse: entered
+  else blocked
+    Mouse-->>Mouse: stop remaining steps
+  end
+end
+
+Mouse->>CollisionDetection: checkExitOrTrap(grid, self)
+CollisionDetection-->>Mouse: status (exit | trapped | none)
+
+Mouse->>WinLoseDetection: evaluate(status)
+alt exit
+  WinLoseDetection-->>TurnManager: signalGameOver()
+else trapped
+  WinLoseDetection-->>TurnManager: signalLevelComplete()
+else none
+  WinLoseDetection-->>TurnManager: endMouseTurn()
+end
