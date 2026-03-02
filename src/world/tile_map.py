@@ -1,5 +1,5 @@
-from tile_type import TileType
-from position import Position
+from world.tile_type import TileType
+from world.position import Position
 
 
 class TileMap:
